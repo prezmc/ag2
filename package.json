@@ -1,0 +1,37 @@
+{
+  "name": "ag2",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AirGradient Local — dashboard and history for AirGradient monitors via their local API",
+  "scripts": {
+    "dev": "next dev",
+    "build": "node scripts/write-build-env.js && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "mock-device": "node scripts/mock-device.js"
+  },
+  "dependencies": {
+    "lucide-react": "^0.294.0",
+    "next": "^15.5.15",
+    "pg": "^8.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.50.0",
+    "eslint-config-next": "15.5.15",
+    "typescript": "^5.2.0"
+  },
+  "overrides": {
+    "glob": ">=10.5.0",
+    "brace-expansion": ">=2.0.3",
+    "picomatch": ">=4.0.4",
+    "cross-spawn": ">=7.0.6"
+  }
+}

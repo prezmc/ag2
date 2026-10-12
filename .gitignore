@@ -1,0 +1,25 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+/build
+
+# env files (secrets) — commit .env.example only
+.env
+.env*.local
+
+# runtime data (devices.json) — mounted as a volume
+/data/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+**/.DS_Store
+*.pem
+npm-debug.log*
+.claude/settings.local.json
