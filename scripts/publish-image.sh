@@ -1,0 +1,17 @@
+#!/bin/sh
+# Build a multi-arch AG2 image and push it to Docker Hub.
+# Usage:  sh scripts/publish-image.sh            (pushes :latest and :<package.json version>)
+#         IMAGE=youruser/ag2 sh scripts/publish-image.sh
+set -e
+cd "$(dirname "$0")/.."
+IMAGE="${IMAGE:-prezmcmahon/ag2}"
+VERSION="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' package.json | head -1)"
+
+docker info >/dev/null 2>&1 || { echo "Docker isn't running — start Docker Desktop and retry."; exit 1; }
+docker buildx inspect ag2-builder >/dev/null 2>&1 || docker buildx create --name ag2-builder --use >/dev/null
+docker buildx use ag2-builder
+
+echo "Building $IMAGE:latest and $IMAGE:$VERSION for linux/amd64 + linux/arm64…"
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t "$IMAGE:latest" -t "$IMAGE:$VERSION" --push .
+echo "Pushed $IMAGE:latest and $IMAGE:$VERSION"

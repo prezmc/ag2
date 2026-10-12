@@ -100,9 +100,11 @@ npm run dev
 
 See [docs/architecture.md](docs/architecture.md) for how the pieces fit together.
 
-## Make targets
+## Publishing an image
 
-`make up` · `make down` · `make logs` · `make build` · `make deploy` (multi-arch push to `$IMAGE`)
+```bash
+sh scripts/publish-image.sh      # multi-arch build, pushes prezmcmahon/ag2:latest and :<version>
+```
 
 ## License
 
