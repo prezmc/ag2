@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  AirGradient Local (AG2) — everything you need to run it.
+#
+#  Start:   docker compose up -d
+#  Open:    http://<this-computer's-IP>:3000   (or http://localhost:3000)
+#  Stop:    docker compose down          (your data is kept)
+#  Update:  docker compose pull && docker compose up -d
+#
+#  Optional settings go in a file named .env next to this one
+#  (copy .env.example to .env). Nothing needs to be set to get started.
+# ─────────────────────────────────────────────────────────────────────────────
+name: ag2
+
+services:
+  app:
+    image: prezmcmahon/ag2:${AG2_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${AG2_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://ag2:${DB_PASSWORD:-ag2-local-db}@db:5432/ag2
+      AG2_API_KEY: ${AG2_API_KEY:-}
+    volumes:
+      - app_data:/app/data          # your list of monitors
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ag2
+      POSTGRES_USER: ag2
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ag2-local-db}
+    volumes:
+      - db_data:/var/lib/postgresql/data   # your measurement history
+    # The database is only reachable by the app, never from your network.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ag2 -d ag2 -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  app_data:
+  db_data:

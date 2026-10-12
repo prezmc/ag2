@@ -29,20 +29,31 @@ with severity, TimescaleDB rollups, CSV/JSON export) and drops weather, AI and c
   Redirects are blocked, every request times out after 10 s, and only expected
   fields are kept from the response.
 
-## Quick start (Docker)
+## Install (for anyone, no source code needed)
+
+Full step-by-step guide: **[deploy/INSTALL.md](deploy/INSTALL.md)**. Short version:
 
 ```bash
-cp .env.example .env        # set DB_PASSWORD (openssl rand -hex 32)
-docker compose up -d --build
+mkdir ag2 && cd ag2
+docker run --rm -v "$PWD:/out" prezmcmahon/ag2 setup   # drops docker-compose.yml, .env.example, INSTALL.md here
+docker compose up -d
 ```
 
 Open <http://localhost:3000>. Go to **Settings → Add Monitor**, enter the monitor's IP
 address (for example `192.168.1.50`), click **Test**, then **Add Monitor**.
 
-> **Tip:** Give each monitor a DHCP reservation in your router so its IP address never changes.
+Nothing needs configuring. The app creates its own database tables on first start, and
+every setting in `.env.example` is optional. If WeathAir runs on the same machine,
+set `AG2_PORT=3001` in `.env`; AG2 uses its own Compose project and data volumes.
 
-If WeathAir runs on the same machine, set `AG2_PORT=3001` in `.env`. AG2 uses its own
-Compose project, volume and database, so the two apps don't share any data.
+The install kit lives in [`deploy/`](deploy/). It's built into the image, which is what
+the `setup` command hands out. Edit it there, then republish the image.
+
+### Build from source instead
+
+```bash
+docker compose up -d --build     # root docker-compose.yml = deploy kit + build: .
+```
 
 ### Requirements on the monitor
 
@@ -58,10 +69,9 @@ curl http://192.168.1.50/measures/current
 ```bash
 npm install
 
-# 1. A database (any TimescaleDB works; this one is throwaway)
+# 1. A database (any TimescaleDB works; the app creates its tables on start)
 docker run -d --name ag2-db -p 5432:5432 \
   -e POSTGRES_DB=ag2 -e POSTGRES_USER=ag2 -e POSTGRES_PASSWORD=dev \
-  -v "$PWD/scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro" \
   timescale/timescaledb:latest-pg16
 
 # 2. A fake monitor (optional): add it in the app as 127.0.0.1:8081
@@ -78,7 +88,7 @@ npm run dev
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DB_PASSWORD` | — (required) | TimescaleDB password used by Compose |
+| `DB_PASSWORD` | built-in default | Database password (the database is never exposed outside Docker) |
 | `AG2_PORT` | `3000` | Port the dashboard is published on |
 | `AG2_API_KEY` | empty (off) | Requires an `X-API-Key` header on API calls that don't come from the dashboard itself |
 | `DATA_DIR` | `/app/data` | Where `devices.json` lives |

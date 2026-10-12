@@ -1,52 +1,40 @@
-name: ag2   # pinned so volumes survive a directory rename
+# For BUILDING AG2 from source:   docker compose up -d --build
+# To just RUN AG2, use deploy/docker-compose.yml instead — see deploy/INSTALL.md.
+# (Same services, volumes and settings; this file only adds `build: .`)
+name: ag2
 
 services:
+  app:
+    image: prezmcmahon/ag2:${AG2_VERSION:-latest}
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${AG2_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://ag2:${DB_PASSWORD:-ag2-local-db}@db:5432/ag2
+      AG2_API_KEY: ${AG2_API_KEY:-}
+    volumes:
+      - app_data:/app/data          # your list of monitors
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: timescale/timescaledb:latest-pg16
     restart: unless-stopped
     environment:
       POSTGRES_DB: ag2
       POSTGRES_USER: ag2
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ag2-local-db}
     volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    # Not published to the host — only the app container talks to it.
+      - db_data:/var/lib/postgresql/data   # your measurement history
+    # The database is only reachable by the app, never from your network.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ag2 -d ag2 -h 127.0.0.1"]
       interval: 10s
       timeout: 5s
       retries: 10
 
-  app:
-    image: ${AG2_IMAGE:-prezmcmahon/ag2:latest}
-    build: .
-    restart: unless-stopped
-    # A normal bridge network is enough: the app only makes outbound HTTP
-    # requests to your monitors' LAN IPs (no UDP broadcast, unlike WeathAir).
-    ports:
-      - "${AG2_PORT:-3000}:3000"
-    environment:
-      - DATABASE_URL=postgresql://ag2:${DB_PASSWORD}@db:5432/ag2
-      - DATA_DIR=/app/data
-      - AG2_API_KEY=${AG2_API_KEY:-}
-    volumes:
-      - ./data:/app/data
-    depends_on:
-      db:
-        condition: service_healthy
-
-  # ── Optional: public HTTPS via Cloudflare Tunnel ───────────────────────────
-  # Uncomment, set CLOUDFLARE_TUNNEL_TOKEN, and point the tunnel at http://app:3000.
-  # If you expose AG2 publicly, put Cloudflare Access (or similar) in front of it.
-  # cloudflared:
-  #   image: cloudflare/cloudflared:latest
-  #   restart: unless-stopped
-  #   command: tunnel --no-autoupdate run
-  #   environment:
-  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-  #   depends_on:
-  #     - app
-
 volumes:
+  app_data:
   db_data:

@@ -1,43 +1,46 @@
 /**
  * Next.js instrumentation hook — runs once when the server starts.
- * Applies idempotent schema touch-ups, then starts the background poller.
- *
- * The full schema (hypertable + continuous aggregates) is created by
- * scripts/init-db.sql when the database volume is first initialized.
- * These statements just make sure the tables the poller writes to exist,
- * so the app also works against a database created by an older schema.
+ * Waits for the database, creates/updates the schema, then starts the poller.
  */
-const MIGRATIONS = [
-  `CREATE TABLE IF NOT EXISTS device_status (
-     device_id             TEXT PRIMARY KEY,
-     last_seen             TIMESTAMPTZ,
-     last_attempt          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-     last_error            TEXT,
-     consecutive_failures  INTEGER NOT NULL DEFAULT 0,
-     payload               JSONB
-   )`,
-  `ALTER TABLE measurements ADD COLUMN IF NOT EXISTS pm02_compensated DOUBLE PRECISION`,
-  `ALTER TABLE measurements ADD COLUMN IF NOT EXISTS pm003_count DOUBLE PRECISION`,
-  `ALTER TABLE measurements ADD COLUMN IF NOT EXISTS boot_count INTEGER`,
-];
-
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+
+  const { query } = await import('./lib/db');
+  const { SCHEMA } = await import('./lib/schema');
+
+  // The database container may still be starting — wait up to ~2 minutes.
+  let ready = false;
+  for (let attempt = 1; attempt <= 40; attempt++) {
+    try {
+      await query('SELECT 1');
+      ready = true;
+      break;
+    } catch {
+      if (attempt === 1) console.log('[BOOT] Waiting for the database…');
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+  if (!ready) {
+    console.error('[BOOT] Could not reach the database. Check DATABASE_URL / that the db container is running.');
+    return;
+  }
+
+  let failures = 0;
+  for (const step of SCHEMA) {
+    try {
+      await query(step.sql);
+    } catch (err) {
+      failures++;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[SCHEMA] ${step.name}: ${msg.slice(0, 160)}`);
+    }
+  }
+  console.log(failures ? `[SCHEMA] Done with ${failures} warning(s)` : '[SCHEMA] Ready');
+
   if (process.env.AG2_DISABLE_POLLER === 'true') {
     console.log('[BOOT] Poller disabled via AG2_DISABLE_POLLER');
     return;
   }
-
-  const { query } = await import('./lib/db');
-
-  for (const sql of MIGRATIONS) {
-    try {
-      await query(sql);
-    } catch (err) {
-      console.warn('[MIGRATE]', err instanceof Error ? err.message.slice(0, 160) : err);
-    }
-  }
-
   const { startPoller } = await import('./lib/poller');
   await startPoller();
 }
