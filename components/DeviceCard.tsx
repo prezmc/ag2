@@ -327,7 +327,8 @@ function MetricCard({ icon, label, value, unit, status, note }: {
       <div className="metric-label">{label}</div>
       <div className="metric-value">{value}</div>
       {unit && <div className="metric-unit">{unit}</div>}
-      {note && <div className="metric-note">({note})</div>}
+      {/* Always reserve the note line so every tile is the same height */}
+      <div className="metric-note" aria-hidden={!note}>{note ? `(${note})` : "\u00a0"}</div>
       {status && <div className="metric-status">{status.label}</div>}
     </div>
   );

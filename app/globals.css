@@ -1885,3 +1885,11 @@ html { background-color: #0a1628; }
   .aqi-divider { width: auto; height: 1px; margin: 0 1.25rem; }
   .aqi-panel { min-width: 0; }
 }
+
+/* Equal-height device cards: the grid cell stretches, and the card fills it,
+   with the footer row pinned to the bottom */
+.device-anchor { display: flex; flex-direction: column; }
+.device-anchor > .device-card { flex: 1; display: flex; flex-direction: column; }
+.device-anchor > .device-card > .device-card-body { flex: 1; display: flex; flex-direction: column; }
+.device-anchor .card-footer-row { margin-top: auto; }
+.device-anchor .metrics-grid { margin-bottom: 1.1rem; }
