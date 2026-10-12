@@ -4,25 +4,29 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+  // Run in the background: Next.js holds all requests until register() returns,
+  // so awaiting the database here would freeze the dashboard while the db starts.
+  void boot().catch(err => console.error('[BOOT] Failed:', err));
+}
 
+async function boot() {
   const { query } = await import('./lib/db');
   const { SCHEMA } = await import('./lib/schema');
 
-  // The database container may still be starting — wait up to ~2 minutes.
-  let ready = false;
-  for (let attempt = 1; attempt <= 40; attempt++) {
+  // The database container may still be starting (or restarting) — keep
+  // trying until it answers; the dashboard stays up and reports it meanwhile.
+  for (let attempt = 1; ; attempt++) {
     try {
       await query('SELECT 1');
-      ready = true;
+      if (attempt > 1) console.log('[BOOT] Database is up');
       break;
-    } catch {
-      if (attempt === 1) console.log('[BOOT] Waiting for the database…');
+    } catch (err) {
+      if (attempt === 1 || attempt % 10 === 0) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.log(`[BOOT] Waiting for the database… (${msg.slice(0, 80)})`);
+      }
       await new Promise(r => setTimeout(r, 3000));
     }
-  }
-  if (!ready) {
-    console.error('[BOOT] Could not reach the database. Check DATABASE_URL / that the db container is running.');
-    return;
   }
 
   let failures = 0;
