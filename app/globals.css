@@ -1893,3 +1893,20 @@ html { background-color: #0a1628; }
 .device-anchor > .device-card > .device-card-body { flex: 1; display: flex; flex-direction: column; }
 .device-anchor .card-footer-row { margin-top: auto; }
 .device-anchor .metrics-grid { margin-bottom: 1.1rem; }
+
+/* Summary chips: never squeeze a chip so its value wraps out of the border.
+   Chips keep their natural width and wrap to a new row instead; if space is
+   still tight, the monitor name truncates with … before the number does. */
+.home-summary-chips { flex: 1 1 0; }
+.summary-chip {
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, auto) auto;
+  max-width: 100%;
+  min-width: 0;
+}
+.summary-chip-name { min-width: 0; }
+.summary-chip-value { white-space: nowrap; }
+@media (max-width: 480px) {
+  .home-summary-chips { flex-basis: 100%; }
+  .summary-chip { flex: 1 1 100%; grid-template-columns: minmax(0, 1fr) auto; }
+}
