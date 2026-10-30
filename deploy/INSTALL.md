@@ -31,16 +31,18 @@ cd ag2
 docker run --rm -v "${PWD}:/out" prezmcmahon/ag2 setup
 ```
 
-This puts three files in the new `ag2` folder:
+This puts four files in the new `ag2` folder:
 
 | File | What it is |
 |---|---|
 | `docker-compose.yml` | Tells Docker what to run. You don't need to edit it. |
-| `.env.example` | Optional settings: port, password, version. |
+| `.env` | Your settings, including a **random database password created just for you**. Nothing to edit. |
+| `.env.example` | A blank copy of the settings with explanations, for reference. |
 | `INSTALL.md` | This guide. |
 
-> No terminal access? Copy the `docker-compose.yml` text from the Docker Hub page
-> into a file with that name instead.
+> **Keep `.env` private and don't delete it.** It holds your database password.
+> (Files that start with a dot are hidden by default: on a Mac press
+> Cmd+Shift+. in Finder to show them.)
 
 ### Step 2: Start AG2
 
@@ -83,16 +85,36 @@ AG2 restarts on its own after a reboot as long as Docker is running.
 
 ## Optional settings
 
-Nothing has to be configured. To change something:
-
-```bash
-cp .env.example .env      # Windows PowerShell: copy .env.example .env
-```
-
-Open `.env` in any text editor, change the setting, save, then run `docker compose up -d`.
+Nothing has to be configured. Your settings live in `.env`. To change one, open
+`.env` in any text editor, change the value, save, then run `docker compose up -d`.
 
 The most common change is **port 3000 already in use**: set `AG2_PORT=3001`, or any free
 port, and open the dashboard on that port instead.
+
+### About the database password
+
+- **You don't need to know or type it.** The setup command put a random one in `.env`,
+  and AG2 uses it automatically.
+- **It never leaves your computer.** The database is only reachable by AG2 inside Docker,
+  not from your network or the internet.
+- **Don't change it in `.env` after the first start.** The password is set when the
+  database is created; editing `.env` later only changes what AG2 *sends*, so AG2 can't
+  connect. To change it properly, see below.
+- **No `.env`?** (For example, you pasted the Compose file into Portainer.) AG2 then
+  falls back to a built-in default password, `ag2-local-db`. That works, but everyone
+  knows it, so set your own `DB_PASSWORD` before the first start (see the bottom of this
+  page).
+
+### Changing the database password
+
+Run these from the `ag2` folder, replacing `NEWPASSWORD` (letters and numbers only):
+
+```bash
+docker compose exec db psql -U ag2 -d ag2 -c "ALTER USER ag2 PASSWORD 'NEWPASSWORD';"
+```
+
+Then set `DB_PASSWORD=NEWPASSWORD` in `.env` and run `docker compose up -d`.
+Your history is kept.
 
 ---
 
@@ -110,6 +132,10 @@ port, and open the dashboard on that port instead.
 AG2 accepts only home-network addresses (`192.168.x.x`, `10.x.x.x`, `172.16–31.x.x`).
 Enter just the numbers, without `http://` or anything after them.
 
+**Logs say "The database rejected the password"**
+`DB_PASSWORD` in `.env` was changed (or `.env` was replaced) after the first start. Put the
+original value back, or follow "Changing the database password" above.
+
 **The dashboard won't open**
 Run `docker compose ps`. Both `app` and `db` should show "running" or "healthy". If not,
 run `docker compose logs app` to see what went wrong.
@@ -126,9 +152,12 @@ docker compose up -d
 ## Synology / Unraid / Portainer
 
 Create a new **Stack** (Portainer, Unraid Compose Manager) or **Project** (Synology
-Container Manager) and paste the contents of `docker-compose.yml`. To change settings,
-add them as environment variables in that screen (`AG2_PORT`, `DB_PASSWORD`, …)
-instead of using a `.env` file.
+Container Manager) and paste the contents of `docker-compose.yml`.
+
+**Before you deploy it**, add an environment variable named `DB_PASSWORD` with a
+password of your own (letters and numbers only, e.g. from `openssl rand -hex 16`).
+Without it, AG2 uses the built-in default password that everyone knows. Add
+`AG2_PORT` the same way if you need a different port.
 
 ---
 

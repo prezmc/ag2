@@ -6,8 +6,10 @@
 #  Stop:    docker compose down          (your data is kept)
 #  Update:  docker compose pull && docker compose up -d
 #
-#  Optional settings go in a file named .env next to this one
-#  (copy .env.example to .env). Nothing needs to be set to get started.
+#  Settings live in the .env file next to this one. The setup command creates
+#  it with a random database password; nothing else needs to be set.
+#  No .env (e.g. pasted into Portainer)? Set DB_PASSWORD yourself before the
+#  first start, otherwise the built-in default "ag2-local-db" is used.
 # ─────────────────────────────────────────────────────────────────────────────
 name: ag2
 

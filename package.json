@@ -1,6 +1,6 @@
 {
   "name": "ag2",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "private": true,
   "description": "AirGradient Local — dashboard and history for AirGradient monitors via their local API",
   "scripts": {

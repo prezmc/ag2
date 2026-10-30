@@ -35,16 +35,17 @@ Full step-by-step guide: **[deploy/INSTALL.md](deploy/INSTALL.md)**. Short versi
 
 ```bash
 mkdir ag2 && cd ag2
-docker run --rm -v "$PWD:/out" prezmcmahon/ag2 setup   # drops docker-compose.yml, .env.example, INSTALL.md here
+docker run --rm -v "$PWD:/out" prezmcmahon/ag2 setup   # creates docker-compose.yml, .env (with a random DB password), INSTALL.md
 docker compose up -d
 ```
 
 Open <http://localhost:3000>. Go to **Settings → Add Monitor**, enter the monitor's IP
 address (for example `192.168.1.50`), click **Test**, then **Add Monitor**.
 
-Nothing needs configuring. The app creates its own database tables on first start, and
-every setting in `.env.example` is optional. If WeathAir runs on the same machine,
-set `AG2_PORT=3001` in `.env`; AG2 uses its own Compose project and data volumes.
+Nothing needs configuring. `setup` gives each install its own random database password
+in `.env`, and the app creates its own database tables on first start. Every other setting
+is optional. If WeathAir runs on the same machine, set `AG2_PORT=3001` in `.env`; AG2 uses
+its own Compose project and data volumes.
 
 The install kit lives in [`deploy/`](deploy/). It's built into the image, which is what
 the `setup` command hands out. Edit it there, then republish the image.
@@ -88,7 +89,7 @@ npm run dev
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DB_PASSWORD` | built-in default | Database password (the database is never exposed outside Docker) |
+| `DB_PASSWORD` | random, created by `setup` | Password between AG2 and its database. Letters and numbers only; set before the first start. Without a `.env` it falls back to `ag2-local-db`, so set your own when using Portainer/Synology. The database is never exposed outside Docker. To change it later, see [INSTALL.md](deploy/INSTALL.md#changing-the-database-password). |
 | `AG2_PORT` | `3000` | Port the dashboard is published on |
 | `AG2_API_KEY` | empty (off) | Requires an `X-API-Key` header on API calls that don't come from the dashboard itself |
 | `DATA_DIR` | `/app/data` | Where `devices.json` lives |

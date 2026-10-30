@@ -24,7 +24,9 @@ AG2 is designed to run on a **trusted home network**.
   redirects are refused, requests time out after 10 s, and only known
   measurement fields are kept from a monitor's response.
 - **Database** is only reachable inside the Docker network; it is never
-  published to your LAN.
+  published to your LAN. The `setup` command gives every install its own random
+  database password (in `.env`). If you deploy without `.env` (e.g. Portainer),
+  set `DB_PASSWORD` yourself; otherwise the public default `ag2-local-db` is used.
 - **Container** runs the app as an unprivileged user.
 
 ## Keeping up to date
