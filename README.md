@@ -4,9 +4,7 @@ A self-hosted dashboard and history for **AirGradient** air quality monitors.
 It reads each monitor's built-in **local server API** over your LAN, with no AirGradient
 cloud and no third-party services.
 
-AG2 is the AirGradient-only successor to WeathAir. It keeps the parts that worked well
-(severity-colored live tiles, Air Quality / Comfort rings, charts whose line color changes
-with severity, TimescaleDB rollups, CSV/JSON export) and drops weather, AI and commute features.
+![AG2 dashboard showing two monitors with live readings](docs/screenshots/dashboard.webp)
 
 ## Features
 
@@ -28,6 +26,14 @@ with severity, TimescaleDB rollups, CSV/JSON export) and drops weather, AI and c
 - **Locked-down device access.** Only private-network IPv4 addresses are accepted.
   Redirects are blocked, every request times out after 10 s, and only expected
   fields are kept from the response.
+
+## Screenshots
+
+| History charts (colored by severity) | Adding a monitor | On a phone |
+|---|---|---|
+| ![Charts of CO₂, PM, temperature, humidity and VOC/NOx over 24 hours, with lines turning amber or orange above healthy levels](docs/screenshots/charts.webp) | ![Add Monitor form after a successful connection test](docs/screenshots/add-monitor.webp) | ![Dashboard on a phone-sized screen](docs/screenshots/phone.webp) |
+
+*Screenshots use demo monitors and sample data.*
 
 ## Install (for anyone, no source code needed)
 

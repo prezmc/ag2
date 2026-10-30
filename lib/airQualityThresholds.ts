@@ -43,18 +43,18 @@ const AQ_THRESHOLDS = {
     hazardous: 424,
   },
   tvoc: {
-    good: 100,
-    moderate: 500,
-    unhealthy: 1000,
-    'very-unhealthy': 3000,
-    hazardous: 3000,
+    // Sensirion VOC index (1–500). 100 is the sensor's normal baseline.
+    good: 150,                // < 150 normal
+    moderate: 250,            // 150–250 some VOC sources present
+    unhealthy: 400,           // 250–400 elevated — ventilate
+    'very-unhealthy': 500,    // > 400 very high
   },
   nox: {
-    good: 50,
-    moderate: 100,
+    // Sensirion NOx index (1–500). 1 is the sensor's normal baseline.
+    good: 20,                 // ≤ 20 normal
+    moderate: 100,            // e.g. gas stove, nearby traffic
     unhealthy: 200,
     'very-unhealthy': 400,
-    hazardous: 400,
   },
   wifi: {
     good: -60,
@@ -164,27 +164,18 @@ export function getAirQualityStatus(
     return 'good';
   }
 
-  // For other metrics, check from most severe to least severe
-  // Thresholds represent the upper bound of each category (inclusive)
-  // Type guard to check if threshold is a number (not an object)
-  const isNumberThreshold = (t: number | { min?: number; max?: number } | undefined): t is number => {
-    return typeof t === 'number';
-  };
+  // For the other metrics, each threshold is the UPPER bound of its level
+  // (inclusive): e.g. CO₂ good ≤ 1000, moderate ≤ 2000, unhealthy ≤ 5000,
+  // very-unhealthy ≤ 10000, hazardous above that.
+  const isNumberThreshold = (t: number | { min?: number; max?: number } | undefined): t is number =>
+    typeof t === 'number';
 
-  if (isNumberThreshold(typeThresholds.hazardous) && value > typeThresholds.hazardous) {
-    return 'hazardous';
+  const ordered: AirQualityStatus[] = ['good', 'moderate', 'unhealthy', 'very-unhealthy'];
+  for (const level of ordered) {
+    const limit = typeThresholds[level];
+    if (isNumberThreshold(limit) && value <= limit) return level;
   }
-  if (isNumberThreshold(typeThresholds['very-unhealthy']) && value > typeThresholds['very-unhealthy']) {
-    return 'very-unhealthy';
-  }
-  if (isNumberThreshold(typeThresholds.unhealthy) && value > typeThresholds.unhealthy) {
-    return 'unhealthy';
-  }
-  if (isNumberThreshold(typeThresholds.moderate) && value > typeThresholds.moderate) {
-    return 'moderate';
-  }
-  // value <= moderate threshold (or <= good threshold if no moderate)
-  return 'good';
+  return 'hazardous';
 }
 
 export function getStatusColor(status: AirQualityStatus): AirQualityThreshold {

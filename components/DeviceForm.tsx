@@ -64,7 +64,7 @@ export default function DeviceForm({ device, onSaved, onCancel }: DeviceFormProp
       else await addDevice(payload);
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save device');
+      setError(err instanceof Error ? err.message : 'Failed to save monitor');
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +75,7 @@ export default function DeviceForm({ device, onSaved, onCancel }: DeviceFormProp
 
   return (
     <form onSubmit={handleSubmit} className="add-device-form">
-      <h2>{editing ? 'Edit Device' : 'Add Device'}</h2>
+      <h2>{editing ? 'Edit Monitor' : 'Add Monitor'}</h2>
       {error && <div className="error-message">{error}</div>}
 
       <div className="form-group">
@@ -161,7 +161,7 @@ export default function DeviceForm({ device, onSaved, onCancel }: DeviceFormProp
 
       <div className="form-actions">
         <button type="submit" disabled={busy} className="submit-button">
-          {submitting ? 'Saving…' : editing ? 'Save Changes' : 'Add Device'}
+          {submitting ? 'Saving…' : editing ? 'Save Changes' : 'Add Monitor'}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} className="cancel-button" disabled={submitting}>

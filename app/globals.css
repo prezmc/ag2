@@ -874,7 +874,7 @@ body::before {
 
 .graph-controls label {
   font-weight: 600;
-  color: #333;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .graph-controls button {
