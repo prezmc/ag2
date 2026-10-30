@@ -23,11 +23,11 @@ async function boot() {
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === '28P01' && (attempt === 1 || attempt % 20 === 0)) {
-        // Wrong password: the database was created with a different DB_PASSWORD
+        // Wrong password: the database was created with a different password
         console.error(
-          '[BOOT] The database rejected the password. DB_PASSWORD in your .env does not match ' +
-          'the password the database was created with. Put the original value back, or see ' +
-          '"Changing the database password" in INSTALL.md.',
+          '[BOOT] The database rejected the password. This happens when the database was created ' +
+          'with a different password than the one AG2 generated — usually an install moved over from ' +
+          'an older version. See "Moving an older install to this version" in INSTALL.md.',
         );
       } else if (attempt === 1 || attempt % 10 === 0) {
         const msg = err instanceof Error ? err.message : String(err);

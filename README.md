@@ -35,32 +35,28 @@ cloud and no third-party services.
 
 *Screenshots use demo monitors and sample data.*
 
-## Install (for anyone, no source code needed)
+## Install
 
-Full step-by-step guide: **[deploy/INSTALL.md](deploy/INSTALL.md)**. Short version:
+You need [Docker](https://www.docker.com/products/docker-desktop/). Then:
 
 ```bash
-mkdir ag2 && cd ag2
-docker run --rm -v "$PWD:/out" prezmcmahon/ag2 setup   # creates docker-compose.yml, .env (with a random DB password), INSTALL.md
+git clone https://github.com/prezmc/ag2.git
+cd ag2
 docker compose up -d
 ```
 
-Open <http://localhost:3000>. Go to **Settings → Add Monitor**, enter the monitor's IP
-address (for example `192.168.1.50`), click **Test**, then **Add Monitor**.
+The first start builds AG2 on your computer (3–5 minutes). Then open
+<http://localhost:3000>, go to **Settings → Add Monitor**, enter your monitor's IP address
+(for example `192.168.1.50`), click **Test**, then **Add Monitor**.
 
-Nothing needs configuring. `setup` gives each install its own random database password
-in `.env`, and the app creates its own database tables on first start. Every other setting
-is optional. If WeathAir runs on the same machine, set `AG2_PORT=3001` in `.env`; AG2 uses
-its own Compose project and data volumes.
+**Nothing needs configuring.** On first start AG2 creates its own random database password
+and its database tables. AG2 itself is built from this repository on your machine. Docker
+only downloads the official Node.js and TimescaleDB base images. No accounts, no cloud.
 
-The install kit lives in [`deploy/`](deploy/). It's built into the image, which is what
-the `setup` command hands out. Edit it there, then republish the image.
+To update: `git pull && docker compose up -d --build`.
 
-### Build from source instead
-
-```bash
-docker compose up -d --build     # root docker-compose.yml = deploy kit + build: .
-```
+No git? Use **Code → Download ZIP** on GitHub. The full step-by-step guide, including
+Portainer, Synology and Unraid, is in **[INSTALL.md](INSTALL.md)**.
 
 ### Requirements on the monitor
 
@@ -93,13 +89,21 @@ npm run dev
 
 ## Configuration
 
+All optional. Put them in a `.env` file next to `docker-compose.yml` (see `.env.example`).
+
 | Variable | Default | Purpose |
 |---|---|---|
-| `DB_PASSWORD` | random, created by `setup` | Password between AG2 and its database. Letters and numbers only; set before the first start. Without a `.env` it falls back to `ag2-local-db`, so set your own when using Portainer/Synology. The database is never exposed outside Docker. To change it later, see [INSTALL.md](deploy/INSTALL.md#changing-the-database-password). |
 | `AG2_PORT` | `3000` | Port the dashboard is published on |
 | `AG2_API_KEY` | empty (off) | Requires an `X-API-Key` header on API calls that don't come from the dashboard itself |
+| `DB_PASSWORD` | not needed | Only for [moving an older install](INSTALL.md#moving-an-older-install-to-this-version). New installs get a random password automatically |
+
+For development (`npm run dev`) the app also reads:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DATABASE_URL` | built from the generated password | Full database connection string |
 | `DATA_DIR` | `/app/data` | Where `devices.json` lives |
-| `ALLOW_LOOPBACK_DEVICES` | `false` | Dev only: allow `127.0.0.1` device addresses (for the mock) |
+| `ALLOW_LOOPBACK_DEVICES` | `false` | Allow `127.0.0.1` device addresses (for the mock monitor) |
 | `AG2_DISABLE_POLLER` | `false` | Start the web app without background polling |
 
 ## API
@@ -116,12 +120,6 @@ npm run dev
 | GET | `/api/health` | Health check (no auth required, counts only) |
 
 See [docs/architecture.md](docs/architecture.md) for how the pieces fit together.
-
-## Publishing an image
-
-```bash
-sh scripts/publish-image.sh      # multi-arch build, pushes prezmcmahon/ag2:latest and :<version>
-```
 
 ## Security
 

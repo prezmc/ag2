@@ -1,70 +1,64 @@
 #!/bin/sh
 # AG2 container entrypoint.
 #
-#   (default)  start the dashboard server
-#   setup      copy the install kit (docker-compose.yml, .env.example, INSTALL.md)
-#              into /out — mount your folder there:
-#                docker run --rm -v "$PWD:/out" prezmcmahon/ag2 setup
-#   help       print usage
+#   start        (default) start the dashboard server
+#   init-secret  first-run step: create the database password if it doesn't exist
+#   help         print usage
+#
+# The database password lives in a small Docker volume shared by the app and
+# the database (mounted at /run/ag2-secrets). It's generated once, at random,
+# for each install — nobody has to choose, type or store it.
 set -e
 
-case "$1" in
-  setup)
-    if [ ! -d /out ]; then
-      echo "Mount the folder to copy into at /out, e.g.:"
-      echo '  docker run --rm -v "$PWD:/out" prezmcmahon/ag2 setup'
-      exit 1
+SECRET_DIR=/run/ag2-secrets
+SECRET_FILE="$SECRET_DIR/db_password"
+
+case "${1:-start}" in
+  init-secret)
+    if [ -s "$SECRET_FILE" ]; then
+      echo "[init] Database password already set — keeping it."
+      exit 0
     fi
-    owner="$(stat -c '%u:%g' /out 2>/dev/null || echo 0:0)"
-
-    # A folder with no docker-compose.yml and no .env is a brand-new install:
-    # give it its own random database password. (Never touch an existing
-    # install, whose database already has a password set.)
-    fresh=no
-    [ ! -e /out/docker-compose.yml ] && [ ! -e /out/.env ] && fresh=yes
-
-    for f in docker-compose.yml .env.example INSTALL.md; do
-      if [ -e "/out/$f" ]; then
-        echo "  kept      $f (already exists — not overwritten)"
-      else
-        cp "/app/deploy/$f" "/out/$f"
-        chown "$owner" "/out/$f" 2>/dev/null || true
-        echo "  created   $f"
-      fi
-    done
-
-    if [ "$fresh" = yes ]; then
-      pw="$(od -A n -N 16 -t x1 /dev/urandom | tr -d ' \n')"
-      sed "s/^DB_PASSWORD=.*/DB_PASSWORD=$pw/" /app/deploy/.env.example > /out/.env
-      chmod 600 /out/.env
-      chown "$owner" /out/.env 2>/dev/null || true
-      echo "  created   .env (with a random database password just for this install)"
-    elif [ -e /out/.env ]; then
-      echo "  kept      .env (already exists — not overwritten)"
+    mkdir -p "$SECRET_DIR"
+    umask 077
+    if [ -n "$DB_PASSWORD" ]; then
+      # Only for installs that already have a database with a known password
+      case "$DB_PASSWORD" in
+        *[!A-Za-z0-9._~-]*)
+          echo "[init] DB_PASSWORD may only contain letters, numbers and . _ ~ -"
+          exit 1 ;;
+      esac
+      printf '%s' "$DB_PASSWORD" > "$SECRET_FILE"
+      echo "[init] Saved the database password from DB_PASSWORD."
     else
-      echo "  skipped   .env (existing install — it keeps its current database password)"
+      od -A n -N 16 -t x1 /dev/urandom | tr -d ' \n' > "$SECRET_FILE"
+      echo "[init] Created a random database password for this install."
     fi
-
-    cat <<'MSG'
-
-AG2 setup files are ready. Next:
-
-  1. docker compose up -d
-  2. Open http://localhost:3000  (or http://<this-computer's-IP>:3000)
-  3. Settings → Add Monitor → enter your AirGradient's IP → Test → Add
-
-Settings (port, password, version) are in .env — all optional.
-Full guide: INSTALL.md
-MSG
     exit 0
     ;;
   help|--help|-h)
-    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
     exit 0
+    ;;
+  start) ;;
+  *)
+    echo "Unknown command: $1 (try: start, init-secret, help)"
+    exit 1
     ;;
 esac
 
-# Normal start: make sure the data folder is writable, then drop root.
+# Build the database connection from the generated password, unless a full
+# DATABASE_URL was given (e.g. an external database).
+if [ -z "$DATABASE_URL" ]; then
+  if [ ! -s "$SECRET_FILE" ]; then
+    echo "[boot] No database password found in $SECRET_FILE. Start AG2 with 'docker compose up -d'."
+    exit 1
+  fi
+  DATABASE_URL="postgresql://ag2:$(cat "$SECRET_FILE")@${DB_HOST:-db}:5432/ag2"
+  export DATABASE_URL
+fi
+
+# Make sure the data folder is writable, then drop root.
 mkdir -p /app/data
 chown -R nextjs:nodejs /app/data
 exec su-exec nextjs node server.js

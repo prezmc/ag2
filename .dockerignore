@@ -5,6 +5,7 @@ node_modules
 .env*.local
 data
 docs
-README.md
+*.md
+.env.example
 Dockerfile
 .dockerignore

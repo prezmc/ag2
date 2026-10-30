@@ -24,13 +24,16 @@ AG2 is designed to run on a **trusted home network**.
   redirects are refused, requests time out after 10 s, and only known
   measurement fields are kept from a monitor's response.
 - **Database** is only reachable inside the Docker network; it is never
-  published to your LAN. The `setup` command gives every install its own random
-  database password (in `.env`). If you deploy without `.env` (e.g. Portainer),
-  set `DB_PASSWORD` yourself; otherwise the public default `ag2-local-db` is used.
+  published to your LAN. Every install gets its own random database password,
+  generated on first start and kept in a private Docker volume that only AG2 and
+  its database can read.
+- **Built from source.** AG2's image is built on your machine from this
+  repository. Only the official `node` and `timescale/timescaledb` base images
+  are downloaded.
 - **Container** runs the app as an unprivileged user.
 
 ## Keeping up to date
 
 ```bash
-docker compose pull && docker compose up -d
+git pull && docker compose up -d --build
 ```

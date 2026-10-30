@@ -1,23 +1,29 @@
-# For BUILDING AG2 from source:   docker compose up -d --build
-# To just RUN AG2, use deploy/docker-compose.yml instead — see deploy/INSTALL.md.
-# (Same services, volumes and settings; this file only adds `build: .`)
+# ─────────────────────────────────────────────────────────────────────────────
+#  AirGradient Local (AG2)
+#
+#  Start:   docker compose up -d              (first start builds AG2: 3–5 min)
+#  Open:    http://<this-computer's-IP>:3000  (or http://localhost:3000)
+#  Stop:    docker compose down               (your data is kept)
+#  Update:  git pull && docker compose up -d --build
+#
+#  Nothing needs to be configured. Optional settings (port, API key) can go in
+#  a file named .env next to this one — see .env.example.
+# ─────────────────────────────────────────────────────────────────────────────
 name: ag2
 
 services:
-  app:
-    image: prezmcmahon/ag2:${AG2_VERSION:-latest}
+  # First-run step: creates a random database password for this install and
+  # keeps it in the private "secrets" volume. Runs, finishes, and stops.
+  init:
+    image: ag2:local
     build: .
-    restart: unless-stopped
-    ports:
-      - "${AG2_PORT:-3000}:3000"
+    pull_policy: build
+    command: ["init-secret"]
     environment:
-      DATABASE_URL: postgresql://ag2:${DB_PASSWORD:-ag2-local-db}@db:5432/ag2
-      AG2_API_KEY: ${AG2_API_KEY:-}
+      DB_PASSWORD: ${DB_PASSWORD:-}   # only for upgrading an install that already has a password
     volumes:
-      - app_data:/app/data          # your list of monitors
-    depends_on:
-      db:
-        condition: service_healthy
+      - secrets:/run/ag2-secrets
+    restart: "no"
 
   db:
     image: timescale/timescaledb:latest-pg16
@@ -25,16 +31,39 @@ services:
     environment:
       POSTGRES_DB: ag2
       POSTGRES_USER: ag2
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-ag2-local-db}
+      POSTGRES_PASSWORD_FILE: /run/ag2-secrets/db_password
     volumes:
       - db_data:/var/lib/postgresql/data   # your measurement history
-    # The database is only reachable by the app, never from your network.
+      - secrets:/run/ag2-secrets:ro
+    # Not published to your network: only the app can reach the database.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ag2 -d ag2 -h 127.0.0.1"]
       interval: 10s
       timeout: 5s
       retries: 10
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  app:
+    image: ag2:local
+    build: .
+    pull_policy: build
+    restart: unless-stopped
+    ports:
+      - "${AG2_PORT:-3000}:3000"
+    environment:
+      AG2_API_KEY: ${AG2_API_KEY:-}
+    volumes:
+      - app_data:/app/data                 # your list of monitors
+      - secrets:/run/ag2-secrets:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
 
 volumes:
   app_data:
   db_data:
+  secrets:
