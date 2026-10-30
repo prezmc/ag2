@@ -7,6 +7,9 @@ import type { Device } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+/** Plenty for a home; stops a runaway script from making the poller hammer the network. */
+const MAX_DEVICES = 50;
+
 class HttpError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
@@ -45,6 +48,9 @@ export async function POST(request: NextRequest) {
     };
 
     await mutateDevices(devices => {
+      if (devices.length >= MAX_DEVICES) {
+        throw new HttpError(`You can add up to ${MAX_DEVICES} monitors`, 400);
+      }
       if (devices.some(d => d.address === newDevice.address)) {
         throw new HttpError('A device with this address already exists', 409);
       }

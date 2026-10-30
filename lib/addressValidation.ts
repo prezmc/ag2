@@ -6,7 +6,9 @@
  * requests to arbitrary internet hosts (SSRF), and hostnames are refused
  * because they can be re-pointed via DNS after validation.
  *
- *   Allowed:  10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16
+ *   Allowed:  10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+ *   Blocked:  169.254.0.0/16 link-local — includes 169.254.169.254, the cloud
+ *             metadata service; AirGradient monitors never use this range
  *   Optional: 127.0.0.0/8 (only when allowLoopback is set — for local dev
  *             against a mock device; never enable in production)
  */
@@ -57,7 +59,6 @@ export function isPrivateIPv4(octets: number[], allowLoopback = false): boolean 
   if (a === 10) return true;
   if (a === 172 && b >= 16 && b <= 31) return true;
   if (a === 192 && b === 168) return true;
-  if (a === 169 && b === 254) return true;
   if (allowLoopback && a === 127) return true;
   return false;
 }
@@ -97,7 +98,7 @@ export function validateDeviceAddress(
   if (!isPrivateIPv4(octets, opts.allowLoopback)) {
     return {
       valid: false,
-      error: 'Address must be on your local network (10.x, 172.16–31.x, 192.168.x or 169.254.x)',
+      error: 'Address must be on your local network (10.x, 172.16–31.x or 192.168.x)',
     };
   }
 

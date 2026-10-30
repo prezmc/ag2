@@ -116,6 +116,10 @@ See [docs/architecture.md](docs/architecture.md) for how the pieces fit together
 sh scripts/publish-image.sh      # multi-arch build, pushes prezmcmahon/ag2:latest and :<version>
 ```
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for the security model and how to report a problem.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

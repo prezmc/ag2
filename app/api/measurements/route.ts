@@ -12,6 +12,9 @@ import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+/** Raw export cap: ~1 year of readings at a 30 s interval, keeps one request from exhausting memory. */
+const MAX_RAW_ROWS = 1_100_000;
+
 const COLS = [
   'rco2', 'pm01', 'pm02', 'pm02_compensated', 'pm10', 'pm003_count',
   'atmp', 'atmp_compensated', 'rhum', 'rhum_compensated',
@@ -61,7 +64,8 @@ export async function GET(request: NextRequest) {
         `SELECT time, device_id, ${plain}
          FROM measurements
          WHERE device_id = $1 AND time >= $2 AND time <= $3
-         ORDER BY time ASC`,
+         ORDER BY time ASC
+         LIMIT ${MAX_RAW_ROWS}`,
         [deviceId, start, end],
       );
     } else if (rangeDays > 60) {

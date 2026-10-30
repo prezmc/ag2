@@ -1,8 +1,8 @@
 {
   "name": "ag2",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "private": true,
-  "description": "AirGradient Local — dashboard and history for AirGradient monitors via their local API",
+  "description": "AirGradient Local \u2014 dashboard and history for AirGradient monitors via their local API",
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/write-build-env.js && next build",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "lucide-react": "^0.294.0",
-    "next": "^15.5.15",
+    "next": "^15.5.28",
     "pg": "^8.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -25,7 +25,7 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "eslint": "^8.50.0",
-    "eslint-config-next": "15.5.15",
+    "eslint-config-next": "15.5.28",
     "typescript": "^5.2.0"
   },
   "overrides": {

@@ -2,6 +2,10 @@
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  // AG2 never uses next/image. Turning the optimizer off removes the /_next/image
+  // endpoint entirely (GHSA-2464-fhr4-w9xw and any future issues in it).
+  images: { unoptimized: true },
+  poweredByHeader: false,
   serverExternalPackages: ['pg', 'pg-pool'],
   webpack: (config, { isServer }) => {
     if (isServer) {
