@@ -1,8 +1,8 @@
 {
   "name": "ag2",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "private": true,
-  "description": "AirGradient Local \u2014 dashboard and history for AirGradient monitors via their local API",
+  "description": "AirGradient Local — dashboard and history for AirGradient monitors via their local API",
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/write-build-env.js && next build",

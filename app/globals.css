@@ -1784,44 +1784,6 @@ a.info-button {
   color: rgba(255,255,255,0.7);
   white-space: nowrap;
 }
-.home-summary-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  min-width: 0;
-}
-.summary-chip {
-  display: grid;
-  grid-template-columns: auto auto;
-  column-gap: 0.75rem;
-  align-items: baseline;
-  padding: 0.55rem 0.9rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: #fff;
-  background: var(--chip-bg, rgba(255,255,255,0.06));
-  border: 1px solid var(--chip-color, rgba(255,255,255,0.15));
-  backdrop-filter: blur(12px);
-  transition: transform 0.15s ease, background 0.15s ease;
-  max-width: 100%;
-}
-.summary-chip:hover { transform: translateY(-1px); }
-.summary-chip.offline { opacity: 0.55; border-style: dashed; }
-.summary-chip-name {
-  font-weight: 600;
-  font-size: 0.85rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.summary-chip-value { font-variant-numeric: tabular-nums; font-size: 0.85rem; text-align: right; }
-.summary-chip-status {
-  grid-column: 1 / -1;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--chip-color, rgba(255,255,255,0.6));
-}
 
 /* ── Device form ── */
 .address-row { display: flex; gap: 0.5rem; }
@@ -1872,8 +1834,6 @@ a.info-button {
 }
 
 @media (max-width: 480px) {
-  .home-summary-chips { width: 100%; }
-  .summary-chip { flex: 1 1 100%; }
 }
 
 /* Solid base behind the fixed gradient so nothing white ever shows through */
@@ -1894,19 +1854,67 @@ html { background-color: #0a1628; }
 .device-anchor .card-footer-row { margin-top: auto; }
 .device-anchor .metrics-grid { margin-bottom: 1.1rem; }
 
-/* Summary chips: never squeeze a chip so its value wraps out of the border.
-   Chips keep their natural width and wrap to a new row instead; if space is
-   still tight, the monitor name truncates with … before the number does. */
-.home-summary-chips { flex: 1 1 0; }
-.summary-chip {
-  flex: 0 0 auto;
-  grid-template-columns: minmax(0, auto) auto;
-  max-width: 100%;
+
+/* ── Summary chips ──────────────────────────────────────────────────────────
+   Flexbox (not grid) so the chip always re-measures when its text changes —
+   Safari can keep a grid's first measured width after content updates, which
+   let "459 ppm" spill outside the border until a refresh. */
+.home-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  flex: 1 1 0;
   min-width: 0;
 }
-.summary-chip-name { min-width: 0; }
-.summary-chip-value { white-space: nowrap; }
+.summary-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.55rem 0.9rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #fff;
+  background: var(--chip-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--chip-color, rgba(255,255,255,0.15));
+  backdrop-filter: blur(12px);
+  transition: transform 0.15s ease, background 0.15s ease;
+  box-sizing: border-box;
+}
+.summary-chip:hover { transform: translateY(-1px); }
+.summary-chip.offline { opacity: 0.55; border-style: dashed; }
+.summary-chip-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.summary-chip-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.summary-chip-value {
+  flex: 0 0 auto;           /* never shrinks, never wraps */
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.summary-chip-status {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  color: var(--chip-color, rgba(255,255,255,0.6));
+}
 @media (max-width: 480px) {
   .home-summary-chips { flex-basis: 100%; }
-  .summary-chip { flex: 1 1 100%; grid-template-columns: minmax(0, 1fr) auto; }
+  .summary-chip { flex: 1 1 100%; }
 }

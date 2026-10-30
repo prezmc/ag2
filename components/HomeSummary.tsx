@@ -12,10 +12,10 @@ import type { Device, DeviceStatus } from '@/lib/types';
  * monitors are online. Clicking a chip scrolls to that device's card.
  */
 export default function HomeSummary({ devices }: { devices: Device[] }) {
-  const [statuses, setStatuses] = useState<DeviceStatus[]>([]);
+  const [statuses, setStatuses] = useState<DeviceStatus[] | null>(null);
 
   const load = useCallback(async () => {
-    try { setStatuses(await getAllStatuses()); } catch { /* card-level errors are shown per device */ }
+    try { setStatuses(await getAllStatuses()); } catch { setStatuses(prev => prev ?? []); /* errors also show per card */ }
   }, []);
 
   useEffect(() => {
@@ -24,7 +24,8 @@ export default function HomeSummary({ devices }: { devices: Device[] }) {
     return () => clearInterval(t);
   }, [load, devices.length]);
 
-  if (devices.length === 0) return null;
+  // Wait for the first readings so chips are laid out once, with their real text
+  if (devices.length === 0 || statuses === null) return null;
 
   const byId = new Map(statuses.map(s => [s.deviceId, s]));
   const online = statuses.filter(s => s.online).length;
@@ -53,8 +54,10 @@ export default function HomeSummary({ devices }: { devices: Device[] }) {
               style={aq ? ({ '--chip-color': aq.color, '--chip-bg': aq.bgColor } as React.CSSProperties) : undefined}
               title={aq ? `${d.name ?? d.address}: ${aq.label}` : d.name ?? d.address}
             >
-              <span className="summary-chip-name">{d.name ?? d.address.replace(/^http:\/\//, '')}</span>
-              <span className="summary-chip-value">{headline}</span>
+              <span className="summary-chip-top">
+                <span className="summary-chip-name">{d.name ?? d.address.replace(/^http:\/\//, '')}</span>
+                <span className="summary-chip-value">{headline}</span>
+              </span>
               <span className="summary-chip-status">{st?.online ? aq?.label ?? '…' : 'Offline'}</span>
             </a>
           );
